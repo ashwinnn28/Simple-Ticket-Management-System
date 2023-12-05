@@ -23,7 +23,7 @@ class TicketingSystem:
     def __init__(self):
         self.theaters = []
         self.issued_tickets = []
-        self.revenue = 0 
+        self.revenue = 0
 
     def issue_ticket(self, theater_name, seat_number, movie_name, show_time, ticket_type):
         # Validate movie name
@@ -48,7 +48,7 @@ class TicketingSystem:
         theater = next((t for t in self.theaters if t.name == theater_name), None)
         if theater:
             theater.movies.append(movie_name)
-        
+
         # Record the issued ticket for later revenue calculation
         self.issued_tickets.append(ticket)
         return ticket
@@ -87,28 +87,25 @@ class TicketingSystem:
     def generate_revenue_report(self):
         report = []
 
-    for theater in self.theaters:
-        for show_time in theater.shows:
-            # Calculate revenue for each show in each theater
-            total_amount_sold = 0
+        for theater in self.theaters:
+            for show_time in theater.shows:
+                # Calculate revenue for each show in each theater
+                total_amount_sold = sum(ticket.price for ticket in self.issued_tickets
+                                        if ticket.theater_name == theater.name and ticket.show_time == show_time)
 
-            for ticket in self.issued_tickets:
-                if ticket.theater_name == theater.name and ticket.show_time == show_time:
-                    total_amount_sold += ticket.price
+                report.append((theater.name, show_time, total_amount_sold))
 
-            report.append((theater.name, show_time, total_amount_sold))
+        # Export to CSV
+        with open('revenue_report.csv', 'w', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            csv_writer.writerow(['Theater', 'Show Time', 'Total Amount Sold'])
+            csv_writer.writerows(report)
 
-    # Export to CSV
-    with open('revenue_report.csv', 'w', newline='') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Theater', 'Show Time', 'Total Amount Sold'])
-        csv_writer.writerows(report)
+        # Export to Excel
+        df = pd.DataFrame(report, columns=['Theater', 'Show Time', 'Total Amount Sold'])
+        df.to_excel('revenue_report.xlsx', index=False)
 
-    # Export to Excel
-    df = pd.DataFrame(report, columns=['Theater', 'Show Time', 'Total Amount Sold'])
-    df.to_excel('revenue_report.xlsx', index=False)
-
-    return report
+        return report
 
 
 def main():
@@ -117,10 +114,9 @@ def main():
     theater_a = Theater("A", 50, ["9:30 AM", "1:30 PM", "6:00 PM"])
     theater_b = Theater("B", 25, ["9:30 AM", "1:30 PM", "6:00 PM"])
 
-# Adding more movies to theaters
+    # Adding more movies to theaters
     theater_a.movies.extend(["leo", "Batman", "Interstellar", "Avengers", "Inception"])
     theater_b.movies.extend(["KGF", "Oppenheimer", "Titanic", "Spiderman", "Joker"])
-
 
     ticketing_system = TicketingSystem()
     ticketing_system.theaters.extend([theater_a, theater_b])
@@ -148,7 +144,7 @@ def main():
                 continue  # Move back to the main menu
 
             show_time = input("Enter show time (9:30 AM, 1:30 PM, 6:00 PM): ")
-            
+
             # Validate show time only if the movie name is valid
             allowed_show_times = ["9:30 AM", "1:30 PM", "6:00 PM"]
             if show_time not in allowed_show_times:
@@ -168,8 +164,6 @@ def main():
                 print("Show Time:", ticket.show_time)
                 print("Ticket Type:", ticket.ticket_type)
                 print("Price:", ticket.price)
-
-        # ... (rest of the menu options)
 
         elif choice == "2":
             theater_name = input("Enter theater name (A/B): ")
